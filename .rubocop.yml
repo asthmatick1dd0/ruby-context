@@ -1,13 +1,9 @@
-require:
+plugins:
   - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 3.2
   NewCops: disable
-  Exclude:
-    - 'bin/**/*'
-    - 'vendor/**/*'
-    - 'tmp/**/*'
 
 Layout/LineLength:
   Max: 140
@@ -23,15 +19,6 @@ Style/WordArray:
 
 Metrics/MethodLength:
   Max: 25
-
-Metrics/AbcSize:
-  Max: 30
-
-Metrics/CyclomaticComplexity:
-  Max: 10
-
-Metrics/PerceivedComplexity:
-  Max: 12
 
 Metrics/BlockLength:
   Exclude:
