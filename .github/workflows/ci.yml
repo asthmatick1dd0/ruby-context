@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Check Ruby version
+        run: ruby -v
+
+      - name: Install dependencies (if Gemfile exists)
+        shell: bash
+        run: |
+          if [ -f Gemfile ]; then
+            bundle install --jobs 4 --retry 3
+          else
+            echo "Gemfile not found, skipping bundle install"
+          fi
+
+      - name: Lint with RuboCop
+        shell: bash
+        run: |
+          RUBY_FILES=$(git ls-files | grep -E '\.rb$|\.rake$|\.gemspec$|(^|/)Rakefile$' || true)
+
+          if [ -z "$RUBY_FILES" ]; then
+            echo "No Ruby files found, skipping RuboCop"
+            exit 0
+          fi
+
+          if [ -f Gemfile ]; then
+            bundle exec rubocop $RUBY_FILES
+          else
+            gem install rubocop --no-document
+            rubocop $RUBY_FILES
+          fi
+
+      - name: Build gem (if gemspec exists)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          GEMSPECS=(*.gemspec)
+
+          if [ ${#GEMSPECS[@]} -eq 0 ]; then
+            echo "No gemspec found, skipping gem build"
+            exit 0
+          fi
+
+          for spec in "${GEMSPECS[@]}"; do
+            echo "Building $spec"
+            gem build "$spec"
+          done
+
+      - name: Run tests from ./spec/context/
+        shell: bash
+        run: |
+          if [ ! -d ./spec/context ]; then
+            echo "Directory ./spec/context/ not found, skipping tests"
+            exit 0
+          fi
+
+          TEST_FILES=$(find ./spec/context -type f -name '*_spec.rb')
+
+          if [ -z "$TEST_FILES" ]; then
+            echo "No *_spec.rb files in ./spec/context/, skipping tests"
+            exit 0
+          fi
+
+          if [ -f Gemfile ]; then
+            bundle exec rspec ./spec/context
+          else
+            gem install rspec --no-document
+            rspec ./spec/context
+          fi
