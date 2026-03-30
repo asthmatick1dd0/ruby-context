@@ -1,8 +1,6 @@
 # ruby-context
 
-## ruby-context - Golang подобный context для Ruby
-
-Context — это минимальная реализация Go-подобного контекста для Ruby:
+ruby-context - Golang подобный context для Ruby
 
 - поддержка cancelable контекстов
 - propagation
