@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "bundler/setup"
-require "context"
+require 'bundler/setup'
+require 'context'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

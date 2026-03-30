@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
 gemspec
 
 group :development do
-  gem "rspec", "~> 3.12"
-  gem "rubocop", "~> 1.50"
-  gem "rubocop-rspec"
+  gem 'rspec', '~> 3.12'
+  gem 'rubocop', '~> 1.50'
+  gem 'rubocop-rspec'
 end

@@ -23,5 +23,5 @@ Gem::Specification.new do |spec|
     'changelog_uri' => 'https://github.com/asthmatick1dd0/ruby-context/releases'
   }
 
-  spec.add_development_dependency "rspec"
+  spec.add_development_dependency 'rspec'
 end
