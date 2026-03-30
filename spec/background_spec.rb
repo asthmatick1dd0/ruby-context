@@ -13,7 +13,7 @@ RSpec.describe Context do
       expect(first).to be(second)
     end
 
-    it 'is not cancelable' do
+    it 'creates a non-cancelable context' do
       expect(background.instance_variable_get(:@cancelable)).to be(false)
     end
 
@@ -30,6 +30,12 @@ RSpec.describe Context do
       second = described_class.background
 
       expect(first.object_id).to eq(second.object_id)
+    end
+
+    it 'does nothing when cancel! is called' do
+      expect { background.cancel! }.not_to raise_error
+      expect(background.done?).to be(false)
+      expect(background.err).to be_nil
     end
   end
 end
