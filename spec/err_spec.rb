@@ -26,6 +26,14 @@ RSpec.describe Context do
 
         expect(ctx.err).to eq(:canceled)
       end
+
+      it 'returns explicit cancel reason if provided' do
+        ctx, = described_class.with_cancel(described_class.background)
+
+        ctx.cancel!(:deadline_exceeded)
+
+        expect(ctx.err).to eq(:deadline_exceeded)
+      end
     end
 
     context 'when parent is canceled' do
@@ -36,6 +44,15 @@ RSpec.describe Context do
         cancel.call
 
         expect(child.err).to eq(:canceled)
+      end
+
+      it 'returns parent deadline_exceeded for child' do
+        parent, = described_class.with_cancel(described_class.background)
+        child, = described_class.with_cancel(parent)
+
+        parent.cancel!(:deadline_exceeded)
+
+        expect(child.err).to eq(:deadline_exceeded)
       end
     end
 

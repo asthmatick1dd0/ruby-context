@@ -45,6 +45,14 @@ RSpec.describe Context do
 
         expect(ctx.done?).to be(true)
       end
+
+      it 'sets deadline_exceeded as cancel reason' do
+        ctx = described_class.new(deadline: Time.now - 1)
+
+        ctx.done?
+
+        expect(ctx.err).to eq(:deadline_exceeded)
+      end
     end
   end
 end
