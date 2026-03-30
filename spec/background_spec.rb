@@ -7,7 +7,10 @@ RSpec.describe Context do
     subject(:background) { described_class.background }
 
     it 'returns the same instance every time' do
-      expect(described_class.background).to be(described_class.background)
+      first = described_class.background
+      second = described_class.background
+
+      expect(first).to be(second)
     end
 
     it 'creates a non-cancelable context' do
