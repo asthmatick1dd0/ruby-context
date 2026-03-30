@@ -26,6 +26,19 @@ class Context
     [ctx, cancel_proc]
   end
 
+  # Создает контекст со значением (аналог context.WithValue в Go)
+  # @param parent [Context] родительский контекст
+  # @param key [Symbol, String] ключ для значения
+  # @param value [Object] значение для сохранения
+  # @return [Context] новый контекст с сохраненным значением
+  # @example
+  #   ctx = Context.with_value(Context.background, :user, "alice")
+  #   ctx[:user]  # => "alice"
+  def self.with_value(parent, key, value)
+    # Создаем новый контекст с маленьким hash для одного значения
+    new(parent: parent, values: { key => value }, cancelable: parent.instance_variable_get(:@cancelable))
+  end
+
   def initialize(parent: nil, values: {}, deadline: nil, cancelable: true)
     @parent = parent
     @values = values
@@ -85,6 +98,24 @@ class Context
 
       nil
     end
+  end
+
+  # Получает значение по ключу из контекста
+  # Сначала ищет в текущем узле, затем вверх по parent chain
+  # @param key [Symbol, String] ключ для поиска
+  # @return [Object, nil] значение или nil если ключ не найден
+  # @example
+  #   parent = Context.with_value(Context.background, :user, "alice")
+  #   child = Context.with_value(parent, :request_id, "123")
+  #   child[:user]        # => "alice" (из parent)
+  #   child[:request_id]  # => "123" (из текущего узла)
+  #   child[:unknown]     # => nil
+  def [](key)
+    # Сначала проверяем текущий узел
+    return @values[key] if @values.key?(key)
+    
+    # Затем идем вверх по parent chain
+    @parent&.[](key)
   end
 
   private
