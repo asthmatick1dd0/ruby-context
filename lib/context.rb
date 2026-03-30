@@ -88,6 +88,14 @@ class Context
 
   private
 
+  # Регистрирует дочерний контекст
+  # Добавляет ребенка в список @children для propagation отмены
+  def register_child(child)
+    @mutex.synchronize do
+      @children << child unless @children.include?(child)
+    end
+  end
+
   # Проверяет, истек ли deadline
   def deadline_exceeded?
     @deadline && Time.now >= @deadline
