@@ -30,3 +30,9 @@ RSpec/MultipleExpectations:
 
 RSpec/ExampleLength:
   Max: 15
+
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+RSpec/ContextWording:
+  Enabled: false
