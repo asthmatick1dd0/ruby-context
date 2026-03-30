@@ -3,52 +3,84 @@
 require 'spec_helper'
 
 RSpec.describe Context do
-  describe '.with_cancel' do
-    let(:parent) { described_class.background }
+  describe '#cancel!' do
+    context 'for background context' do
+      it 'does nothing' do
+        background = described_class.background
 
-    it 'returns a context and a cancel proc' do
-      ctx, cancel = described_class.with_cancel(parent)
-
-      expect(ctx).to be_a(described_class)
-      expect(cancel).to respond_to(:call)
+        expect { background.cancel! }.not_to raise_error
+        expect(background.done?).to be(false)
+        expect(background.err).to be_nil
+      end
     end
 
-    it 'creates a cancelable child context' do
-      ctx, = described_class.with_cancel(parent)
+    context 'for cancelable context' do
+      let(:ctx) do
+        child, = described_class.with_cancel(described_class.background)
+        child
+      end
 
-      expect(ctx.instance_variable_get(:@cancelable)).to be(true)
-      expect(ctx.instance_variable_get(:@parent)).to be(parent)
+      it 'marks the context as canceled' do
+        ctx.cancel!
+
+        expect(ctx.done?).to be(true)
+        expect(ctx.err).to eq(:canceled)
+      end
+
+      it 'supports explicit deadline_exceeded reason' do
+        ctx.cancel!(:deadline_exceeded)
+
+        expect(ctx.done?).to be(true)
+        expect(ctx.err).to eq(:deadline_exceeded)
+      end
+
+      it 'is idempotent' do
+        ctx.cancel!
+        first_err = ctx.err
+
+        ctx.cancel!
+        second_err = ctx.err
+
+        expect(first_err).to eq(:canceled)
+        expect(second_err).to eq(:canceled)
+      end
     end
 
-    it 'returns an active context initially' do
-      ctx, = described_class.with_cancel(parent)
+    context 'when context has children' do
+      it 'cancels all children recursively' do
+        parent, = described_class.with_cancel(described_class.background)
+        child, = described_class.with_cancel(parent)
+        grandchild, = described_class.with_cancel(child)
 
-      expect(ctx.done?).to be(false)
-      expect(ctx.err).to be_nil
-    end
+        parent.cancel!
 
-    it 'cancels the context when cancel proc is called' do
-      ctx, cancel = described_class.with_cancel(parent)
+        expect(parent.done?).to be(true)
+        expect(child.done?).to be(true)
+        expect(grandchild.done?).to be(true)
 
-      cancel.call
+        expect(parent.err).to eq(:canceled)
+        expect(child.err).to eq(:canceled)
+        expect(grandchild.err).to eq(:canceled)
+      end
 
-      expect(ctx.done?).to be(true)
-      expect(ctx.err).to eq(:canceled)
-    end
+      it 'propagates explicit cancel reason to children' do
+        parent, = described_class.with_cancel(described_class.background)
+        child, = described_class.with_cancel(parent)
 
-    it 'does not register child inside non-cancelable background parent' do
-      ctx, = described_class.with_cancel(parent)
+        parent.cancel!(:deadline_exceeded)
 
-      children = parent.instance_variable_get(:@children)
-      expect(children).not_to include(ctx)
-    end
+        expect(parent.err).to eq(:deadline_exceeded)
+        expect(child.err).to eq(:deadline_exceeded)
+      end
 
-    it 'registers child inside cancelable parent' do
-      cancelable_parent, = described_class.with_cancel(described_class.background)
-      child, = described_class.with_cancel(cancelable_parent)
+      it 'clears children list after cancellation' do
+        parent, = described_class.with_cancel(described_class.background)
+        described_class.with_cancel(parent)
 
-      children = cancelable_parent.instance_variable_get(:@children)
-      expect(children).to include(child)
+        parent.cancel!
+
+        expect(parent.instance_variable_get(:@children)).to eq([])
+      end
     end
   end
 end
