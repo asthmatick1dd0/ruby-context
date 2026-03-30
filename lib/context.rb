@@ -21,8 +21,8 @@ class Context
   def self.with_cancel(parent)
     ctx = new(parent: parent, cancelable: true)
     # Регистрируем контекст как ребенка родителя
-    parent.send(:register_child, ctx) if parent.respond_to?(:register_child, true)
-    cancel_proc = -> { ctx.cancel }
+    parent.send(:add_child, ctx) if parent.respond_to?(:add_child, true)
+    cancel_proc = -> { ctx.cancel! }
     [ctx, cancel_proc]
   end
 
@@ -58,7 +58,8 @@ class Context
   # Для background (не cancelable) ничего не делает
   # Устанавливает @canceled = true и @err = CanceledError
   # Рекурсивно отменяет всех детей
-  def cancel
+  # Thread-safe с использованием Mutex
+  def cancel!
     return unless @cancelable
 
     @mutex.synchronize do
@@ -67,7 +68,7 @@ class Context
       @canceled = true
       @err = CanceledError.new('context canceled')
       # Отменяем всех детей
-      @children.each(&:cancel)
+      @children.each(&:cancel!)
       @children.clear
     end
   end
@@ -88,9 +89,13 @@ class Context
 
   private
 
-  # Регистрирует дочерний контекст
-  # Добавляет ребенка в список @children для propagation отмены
-  def register_child(child)
+  # Добавляет дочерний контекст в список @children
+  # Вызывается только если parent cancelable
+  # При отмене родителя все дети автоматически отменяются
+  # @param child [Context] дочерний контекст
+  def add_child(child)
+    return unless @cancelable
+
     @mutex.synchronize do
       @children << child unless @children.include?(child)
     end
