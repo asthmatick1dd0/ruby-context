@@ -113,7 +113,7 @@ class Context
   def [](key)
     # Сначала проверяем текущий узел
     return @values[key] if @values.key?(key)
-    
+
     # Затем идем вверх по parent chain
     @parent&.[](key)
   end
