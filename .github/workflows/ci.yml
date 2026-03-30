@@ -20,7 +20,7 @@ jobs:
       - name: Check Ruby version
         run: ruby -v
 
-      - name: Install dependencies (if Gemfile exists)
+      - name: Install dependencies
         shell: bash
         run: |
           if [ -f Gemfile ]; then
@@ -46,7 +46,7 @@ jobs:
             rubocop $RUBY_FILES
           fi
 
-      - name: Build gem (if gemspec exists)
+      - name: Build gem
         shell: bash
         run: |
           shopt -s nullglob
