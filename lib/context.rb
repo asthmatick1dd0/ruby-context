@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "context/errors"
+require_relative 'context/errors'
 
 # class Context это Go-подобный context для Ruby
 class Context
@@ -32,6 +32,7 @@ class Context
       return true if @canceled
       return true if deadline_exceeded?
       return true if parent_done?
+
       false
     end
   end
@@ -47,17 +48,25 @@ class Context
       return if @canceled
 
       @canceled = true
-      @err = CanceledError.new("context canceled")
-      
+      @err = CanceledError.new('context canceled')
       # Отменяем всех детей
       @children.each(&:cancel)
       @children.clear
     end
   end
 
-  # background никогда не содержит ошибок
+  # Возвращает ошибку контекста
+  # :canceled - если контекст или родитель отменен
+  # :deadline_exceeded - если deadline истек (в будущем)
+  # nil - если контекст активен
   def err
-    nil
+    @mutex.synchronize do
+      return :canceled if @canceled
+      return :canceled if @parent&.err == :canceled
+      return :deadline_exceeded if deadline_exceeded?
+
+      nil
+    end
   end
 
   private
