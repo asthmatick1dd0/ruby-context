@@ -210,7 +210,13 @@ class Context
   def deadline_exceeded?
     return false unless @deadline
 
-    current_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    # Поддерживаем как монотонное время, так и Time объекты
+    current_time = if @deadline.is_a?(Time)
+                     Time.now
+                   else
+                     Process.clock_gettime(Process::CLOCK_MONOTONIC)
+                   end
+
     current_time >= @deadline
   end
 
