@@ -9,6 +9,23 @@ class Context
     @background ||= new(cancelable: false)
   end
 
+  # Создает отменяемый контекст с родителем
+  # @param parent [Context] родительский контекст
+  # @return [Array<Context, Proc>] массив [контекст, callable для отмены]
+  # @example
+  #   ctx, cancel = Context.with_cancel(Context.background)
+  #   ctx.done?  # => false
+  #   cancel.call
+  #   ctx.done?  # => true
+  #   ctx.err    # => :canceled
+  def self.with_cancel(parent)
+    ctx = new(parent: parent, cancelable: true)
+    # Регистрируем контекст как ребенка родителя
+    parent.send(:register_child, ctx) if parent.respond_to?(:register_child, true)
+    cancel_proc = -> { ctx.cancel }
+    [ctx, cancel_proc]
+  end
+
   def initialize(parent: nil, values: {}, deadline: nil, cancelable: true)
     @parent = parent
     @values = values
