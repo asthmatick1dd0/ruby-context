@@ -22,11 +22,17 @@ RSpec.describe Context do
       expect(background.err).to be_nil
     end
 
-    it 'is not affected by repeated calls' do
+    it 'does not create a new object on repeated calls' do
       first = described_class.background
       second = described_class.background
 
       expect(first.object_id).to eq(second.object_id)
+    end
+
+    it 'does nothing when cancel! is called' do
+      expect { background.cancel! }.not_to raise_error
+      expect(background.done?).to be(false)
+      expect(background.err).to be_nil
     end
   end
 
@@ -63,11 +69,19 @@ RSpec.describe Context do
       expect(ctx.err).to eq(:canceled)
     end
 
-    it 'registers the child in parent children list' do
+    it 'does not register child inside non-cancelable background parent' do
       ctx, = described_class.with_cancel(parent)
 
       children = parent.instance_variable_get(:@children)
-      expect(children).to include(ctx)
+      expect(children).not_to include(ctx)
+    end
+
+    it 'registers child inside cancelable parent' do
+      cancelable_parent, = described_class.with_cancel(described_class.background)
+      child, = described_class.with_cancel(cancelable_parent)
+
+      children = cancelable_parent.instance_variable_get(:@children)
+      expect(children).to include(child)
     end
   end
 
@@ -78,7 +92,7 @@ RSpec.describe Context do
       end
     end
 
-    context 'for cancelable context' do
+    context 'for active cancelable context' do
       let(:ctx) do
         child, = described_class.with_cancel(described_class.background)
         child
@@ -89,7 +103,7 @@ RSpec.describe Context do
       end
 
       it 'returns true after cancellation' do
-        ctx.cancel
+        ctx.cancel!
 
         expect(ctx.done?).to be(true)
       end
@@ -116,12 +130,12 @@ RSpec.describe Context do
     end
   end
 
-  describe '#cancel' do
+  describe '#cancel!' do
     context 'for background context' do
       it 'does nothing' do
         background = described_class.background
 
-        expect { background.cancel }.not_to raise_error
+        expect { background.cancel! }.not_to raise_error
         expect(background.done?).to be(false)
         expect(background.err).to be_nil
       end
@@ -134,17 +148,17 @@ RSpec.describe Context do
       end
 
       it 'marks the context as canceled' do
-        ctx.cancel
+        ctx.cancel!
 
         expect(ctx.done?).to be(true)
         expect(ctx.err).to eq(:canceled)
       end
 
       it 'is idempotent' do
-        ctx.cancel
+        ctx.cancel!
         first_err = ctx.err
 
-        ctx.cancel
+        ctx.cancel!
         second_err = ctx.err
 
         expect(first_err).to eq(:canceled)
@@ -158,7 +172,7 @@ RSpec.describe Context do
         child, = described_class.with_cancel(parent)
         grandchild, = described_class.with_cancel(child)
 
-        parent.cancel
+        parent.cancel!
 
         expect(parent.done?).to be(true)
         expect(child.done?).to be(true)
@@ -173,7 +187,7 @@ RSpec.describe Context do
         parent, = described_class.with_cancel(described_class.background)
         described_class.with_cancel(parent)
 
-        parent.cancel
+        parent.cancel!
 
         expect(parent.instance_variable_get(:@children)).to eq([])
       end
@@ -199,7 +213,7 @@ RSpec.describe Context do
       it 'returns :canceled' do
         ctx, = described_class.with_cancel(described_class.background)
 
-        ctx.cancel
+        ctx.cancel!
 
         expect(ctx.err).to eq(:canceled)
       end
