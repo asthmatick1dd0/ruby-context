@@ -22,4 +22,6 @@ Gem::Specification.new do |spec|
     'bug_tracker_uri' => 'https://github.com/asthmatick1dd0/ruby-context/issues',
     'changelog_uri' => 'https://github.com/asthmatick1dd0/ruby-context/releases'
   }
+
+  spec.add_development_dependency "rspec"
 end
