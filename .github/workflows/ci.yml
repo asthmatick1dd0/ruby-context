@@ -20,7 +20,7 @@ jobs:
       - name: Check Ruby version
         run: ruby -v
 
-      - name: Install dependencies (if Gemfile exists)
+      - name: Install dependencies
         shell: bash
         run: |
           if [ -f Gemfile ]; then
@@ -46,7 +46,7 @@ jobs:
             rubocop $RUBY_FILES
           fi
 
-      - name: Build gem (if gemspec exists)
+      - name: Build gem
         shell: bash
         run: |
           shopt -s nullglob
@@ -62,24 +62,24 @@ jobs:
             gem build "$spec"
           done
 
-      - name: Run tests from ./spec/context/
+      - name: Run tests from ./spec/
         shell: bash
         run: |
-          if [ ! -d ./spec/context ]; then
-            echo "Directory ./spec/context/ not found, skipping tests"
+          if [ ! -d ./spec ]; then
+            echo "Directory ./spec/ not found, skipping tests"
             exit 0
           fi
 
-          TEST_FILES=$(find ./spec/context -type f -name '*_spec.rb')
+          TEST_FILES=$(find ./spec -type f -name '*_spec.rb')
 
           if [ -z "$TEST_FILES" ]; then
-            echo "No *_spec.rb files in ./spec/context/, skipping tests"
+            echo "No *_spec.rb files in ./spec/, skipping tests"
             exit 0
           fi
 
           if [ -f Gemfile ]; then
-            bundle exec rspec ./spec/context
+            bundle exec rspec ./spec
           else
             gem install rspec --no-document
-            rspec ./spec/context
+            rspec ./spec
           fi
