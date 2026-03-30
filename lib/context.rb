@@ -95,7 +95,7 @@ class Context
   # @param child [Context] дочерний контекст
   def add_child(child)
     return unless @cancelable
-    
+
     @mutex.synchronize do
       @children << child unless @children.include?(child)
     end
