@@ -1,0 +1,32 @@
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: disable
+
+Layout/LineLength:
+  Max: 140
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/WordArray:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 25
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*.rb'
+    - '*.gemspec'
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Max: 15
