@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "context/errors"
+
 # class Context это Go-подобный context для Ruby
 class Context
   # singleton
