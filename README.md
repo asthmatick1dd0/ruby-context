@@ -10,10 +10,14 @@ Go-like `Context` для Ruby: минимальная реализация ко�
 
 | Возможность | Статус | Примечание |
 | --- | --- | --- |
-| `Context.background` | Ready | Singleton, неотменяемый immutable-контекст |
+| `Context.background` | Ready | Singleton, неотменяемый корневой контекст |
 | `Context.with_cancel(parent)` | Ready | Возвращает `[ctx, cancel_proc]` |
-| Propagation отмены | Ready | Отмена родителя отменяет детей |
+| `Context.with_value(parent, key, value)` | Ready | Значения наследуются по цепочке родителей |
+| `Context.with_timeout(parent, timeout)` | Ready | Дедлайн считается по монотонному времени |
+| Propagation отмены | Ready | Отмена родителя рекурсивно отменяет детей |
 | Ошибки контекста | Ready | `:canceled`, `:deadline_exceeded` |
+| Thread safety | Ready | Синхронизация через `Mutex` |
+
 
 ## Быстрый старт
 
